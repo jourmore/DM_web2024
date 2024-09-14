@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib import cm
 import argparse
-from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import os
 import zipfile
 import warnings
@@ -36,8 +36,8 @@ def plot_cov_ellipse(cov, pos, nstd=3, ax=None, **kwargs):
     return ellip
 
 def show_ellipse(X, y, prefix, x1, x2, y1, y2, output):
-    model = PCA(n_components=2)
-    embedding = model.fit_transform(X)
+    model = LinearDiscriminantAnalysis(n_components=2)
+    embedding = model.fit_transform(X, y)
 
     unique_drugs = set(y)
     regions = sorted(list(unique_drugs))
@@ -62,8 +62,8 @@ def show_ellipse(X, y, prefix, x1, x2, y1, y2, output):
     plt.ylim(np.min(new_y)-y1, np.max(new_y)+y2)
     plt.xticks(size=5, color='black')
     plt.yticks(size=5, color='black')
-    plt.xlabel('PC1 ({} %)'.format(round(model.explained_variance_ratio_[0] * 100, 2)), fontsize=6, color='black')
-    plt.ylabel('PC2 ({} %)'.format(round(model.explained_variance_ratio_[1] * 100, 2)), fontsize=6, color='black')
+    plt.xlabel('LDA1 ({} %)'.format(round(model.explained_variance_ratio_[0] * 100, 2)), fontsize=6, color='black')
+    plt.ylabel('LDA2 ({} %)'.format(round(model.explained_variance_ratio_[1] * 100, 2)), fontsize=6, color='black')
     plt.legend(prop={"size": 5},  loc='upper right', frameon=False, edgecolor='none', facecolor='none')
     # plt.savefig(f'{output}_plot1.png', bbox_inches='tight', dpi=300)
     # plt.savefig(f'{output}_plot1.eps', bbox_inches='tight', dpi=300)
@@ -74,8 +74,8 @@ def show_ellipse(X, y, prefix, x1, x2, y1, y2, output):
 
 def show_ratio(X, output):
     # st.subheader("Variance Ratio")
-    model = PCA()
-    embedding = model.fit_transform(X)
+    model = LinearDiscriminantAnalysis()
+    embedding = model.fit_transform(X, y)
 
     cumulative_variance = []
     cumulative_sum = 0
