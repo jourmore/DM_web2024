@@ -12,7 +12,7 @@ import streamlit as st
 
 warnings.filterwarnings("ignore")
 plt.rcParams['font.family'] = 'serif'
-plt.rcParams['font.serif'] = ['Times New Roman'] + plt.rcParams['font.serif']
+plt.rcParams['font.serif'] = ['Arial'] + plt.rcParams['font.serif']
 
 def plot_point_cov(points, nstd=3, ax=None, **kwargs):
     pos = points.mean(axis=0)
@@ -65,11 +65,12 @@ def show_ellipse(X, y, prefix, x1, x2, y1, y2, output):
     plt.xlabel('LDA1 ({} %)'.format(round(model.explained_variance_ratio_[0] * 100, 2)), fontsize=6, color='black')
     plt.ylabel('LDA2 ({} %)'.format(round(model.explained_variance_ratio_[1] * 100, 2)), fontsize=6, color='black')
     plt.legend(prop={"size": 5},  loc='upper right', frameon=False, edgecolor='none', facecolor='none')
-    # plt.savefig(f'{output}_plot1.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'{output}_plot1.svg', bbox_inches='tight', dpi=300)
     # plt.savefig(f'{output}_plot1.eps', bbox_inches='tight', dpi=300)
     # plt.show()
     plt.title(f'{output}', size=7, color='black')
-    st.pyplot(plt.gcf())
+    # st.pyplot(plt.gcf())
+    st.image(f'{output}_plot1.svg', use_column_width=True)
 
 
 def show_ratio(X, output):
@@ -93,14 +94,15 @@ def show_ratio(X, output):
         plt.text(x=i, y=cumulative_variance[i]+0.5, s=str(round(cumulative_variance[i], 2)), ha='center', va='bottom', fontsize=5, color='black')
     plt.xticks(size=5, color='black')
     plt.yticks(size=5, color='black')
-    plt.xlabel('Number of PCs', fontsize=6, color='black')
+    plt.xlabel('Number of LDAs', fontsize=6, color='black')
     plt.ylabel('Variance Ratio (%)', fontsize=6, color='black')
-    # plt.savefig(f'{output}_plot2.png', bbox_inches='tight', dpi=300)
+    plt.savefig(f'{output}_plot2.svg', bbox_inches='tight', dpi=300)
     # plt.savefig(f'{output}_plot2.eps', bbox_inches='tight', dpi=300)
     # plt.show()
     plt.title(f'{output}', size=7, color='black')
     
-    st.pyplot(plt.gcf())
+    # st.pyplot(plt.gcf())
+    st.image(f'{output}_plot2.svg', use_column_width=True)
     st.dataframe(PCA_var, height=300)
 
 
