@@ -7,7 +7,8 @@ def main(file_css="./static/style.css"):
         st.html('<style>{}</style>'.format(f.read())) 
 
     # st.logo("./static/homelogo.png", link="http://www.nbscal.online/")
-    st.logo("./static/logo.png")
+    st.logo(image="./static/logo.png", size="large", icon_image="./static/logo.png")
+
 
 def pages_run():
     st.sidebar.title(":blue[**WEB降维和可视化**]")
