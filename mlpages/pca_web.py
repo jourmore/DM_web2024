@@ -112,7 +112,7 @@ def show_ratio(X, output):
     # plt.show()
     plt.title(f'{output} Variance Ratio', size=8, color='black')
     # st.pyplot(plt.gcf())
-    st.image(f'{output}_plot1.svg', use_column_width=True)
+    st.image(f'{output}_plot2.svg', use_column_width=True)
     st.dataframe(PCA_var, height=300)
 
 
