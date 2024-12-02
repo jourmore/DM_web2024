@@ -50,16 +50,21 @@ def show_ellipse(X, y, prefix, x1, x2, y1, y2, output):
     # 定义分辨率
     plt.figure(dpi=300, figsize=(3.5, 3))
     # 三分类则为3
+    xxx, yyy = [], []
     for i in range(0, len(regions), 1):
         colors = color_map(color_indices[i])
         pts = embedding[y == int(i+1), :]
         new_x, new_y = embedding[y==i+1, 0], embedding[y==i+1, 1]
         plt.plot(new_x, new_y, 'o', color=colors, label=labels_prefix[i], markersize=3)
         plot_point_cov(pts, nstd=3, alpha=0.25, color=colors)
-
+        xxx.append(new_x)
+        yyy.append(new_y)
+        
     # 添加坐标轴
-    plt.xlim(np.min(new_x)-x1, np.max(new_x)+x2)
-    plt.ylim(np.min(new_y)-y1, np.max(new_y)+y2)
+    xxx_flat = np.concatenate(xxx)
+    yyy_flat = np.concatenate(yyy)
+    plt.xlim(np.min(xxx_flat)-x1, np.max(xxx_flat)+x2)
+    plt.ylim(np.min(yyy_flat)-y1, np.max(yyy_flat)+y2)
     plt.xticks(size=5, color='black')
     plt.yticks(size=5, color='black')
     plt.xlabel('LDA1 ({} %)'.format(round(model.explained_variance_ratio_[0] * 100, 2)), fontsize=6, color='black')
