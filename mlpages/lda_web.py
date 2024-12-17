@@ -3,12 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from matplotlib import cm
-import argparse
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-import os
-import zipfile
-import warnings
+import os, zipfile, warnings, argparse
 import streamlit as st
+import seaborn as sns
+from scipy import stats
 
 warnings.filterwarnings("ignore")
 plt.rcParams['font.family'] = 'serif'
@@ -49,20 +48,20 @@ def show_ellipse(X, y, prefix, x1, x2, y1, y2, output):
 
     # 定义分辨率
     plt.figure(dpi=300, figsize=(3.5, 3))
-    # 三分类则为3
-    xxx, yyy = [], []
+
+    LDA1, LDA2 = [], []
     for i in range(0, len(regions), 1):
         colors = color_map(color_indices[i])
         pts = embedding[y == int(i+1), :]
         new_x, new_y = embedding[y==i+1, 0], embedding[y==i+1, 1]
         plt.plot(new_x, new_y, 'o', color=colors, label=labels_prefix[i], markersize=3)
         plot_point_cov(pts, nstd=3, alpha=0.25, color=colors)
-        xxx.append(new_x)
-        yyy.append(new_y)
+        LDA1.append(new_x)
+        LDA2.append(new_y)
         
     # 添加坐标轴
-    xxx_flat = np.concatenate(xxx)
-    yyy_flat = np.concatenate(yyy)
+    xxx_flat = np.concatenate(LDA1)
+    yyy_flat = np.concatenate(LDA2)
     plt.xlim(np.min(xxx_flat)-x1, np.max(xxx_flat)+x2)
     plt.ylim(np.min(yyy_flat)-y1, np.max(yyy_flat)+y2)
     plt.xticks(size=5, color='black')
@@ -71,15 +70,13 @@ def show_ellipse(X, y, prefix, x1, x2, y1, y2, output):
     plt.ylabel('LDA2 ({} %)'.format(round(model.explained_variance_ratio_[1] * 100, 2)), fontsize=6, color='black')
     plt.legend(prop={"size": 5},  loc='upper right', frameon=False, edgecolor='none', facecolor='none')
     plt.savefig(f'{output}_plot1.svg', bbox_inches='tight', dpi=300)
-    # plt.savefig(f'{output}_plot1.eps', bbox_inches='tight', dpi=300)
-    # plt.show()
     plt.title(f'{output}', size=7, color='black')
-    # st.pyplot(plt.gcf())
-    st.image(f'{output}_plot1.svg', use_column_width=True)
+    st.image(f'{output}_plot1.svg', use_container_width=True)
+
+    return LDA1, LDA2
 
 
 def show_ratio(X, output):
-    # st.subheader("Variance Ratio")
     model = LinearDiscriminantAnalysis()
     embedding = model.fit_transform(X, y)
 
@@ -89,9 +86,7 @@ def show_ratio(X, output):
         cumulative_sum += ratio*100
         cumulative_variance.append(cumulative_sum)
 
-    PCA_var = pd.DataFrame(cumulative_variance)
-    # PCA_var.to_csv(f"{output}_var.csv")
-
+    LDA_var = pd.DataFrame(cumulative_variance, columns=['LDA Cumulative Variance'])
 
     plt.figure(dpi=300, figsize=(3.5, 3))
     plt.bar(range(len(cumulative_variance)), cumulative_variance, color = '#2d857a', width=0.35)
@@ -102,28 +97,25 @@ def show_ratio(X, output):
     plt.xlabel('Number of LDAs', fontsize=6, color='black')
     plt.ylabel('Variance Ratio (%)', fontsize=6, color='black')
     plt.savefig(f'{output}_plot2.svg', bbox_inches='tight', dpi=300)
-    # plt.savefig(f'{output}_plot2.eps', bbox_inches='tight', dpi=300)
-    # plt.show()
     plt.title(f'{output}', size=7, color='black')
     
-    # st.pyplot(plt.gcf())
-    st.image(f'{output}_plot2.svg', use_column_width=True)
-    st.dataframe(PCA_var, height=300)
+    st.image(f'{output}_plot2.svg', use_container_width=True)
+    st.dataframe(LDA_var, height=300, use_container_width=True)
 
+def add_stat_annotation(ax, **kws):
+    r2 = kws.pop('r2', None)
+    pval = kws.pop('pval', None)
+    if r2 is not None:
+        ax.text(0.05, 0.95, f'$R^2$={r2:.2f}', transform=ax.transAxes, fontsize=15, verticalalignment='top')
+    if pval is not None:
+        ax.text(0.05, 0.90, f'p-value={pval:.2e}', transform=ax.transAxes, fontsize=15, verticalalignment='top')
 
-# def parameter():
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument('-f', type=str, default='data.csv', help='csv数据文件')
-#     parser.add_argument('-n', type=str, default='name', help='样本名称的列名')
-#     parser.add_argument('-g', type=str, default='group', help='样本分组的列名')
-#     parser.add_argument('-x1', type=float, default=None, help='x轴上限')
-#     parser.add_argument('-x2', type=float, default=None, help='x轴下限')
-#     parser.add_argument('-y1', type=float, default=None, help='y轴上限')
-#     parser.add_argument('-y2', type=float, default=None, help='y轴下限')
-#     parser.add_argument('-o', type=str, default='PCAoutput', help='默认输出前缀')
-#     args = parser.parse_args()
-#     return args
-
+def plot_concentration(data, output):
+    slope, intercept, r_value, p_value, std_err = stats.linregress(data['LDA1'], data['Concentration'])
+    g = sns.lmplot(x='LDA1', y='Concentration', data=data, palette=['#bb2649'])
+    add_stat_annotation(g.ax, r2=r_value**2, pval=p_value)
+    plt.savefig(f'{output}_plot3.svg', bbox_inches='tight', dpi=300)
+    st.image(f'{output}_plot3.svg', use_container_width=True)
 
 @st.cache_resource
 def load_data(Inputfile):
@@ -143,25 +135,27 @@ if data is not None:
         st.title(":green[**LDA**]")
 
         st.write(":red[*请注意，表格中的分组只能出现数字]")
-        if st.checkbox("[可选] 显示加载数据集", False):
+        if st.checkbox("[可选] 显示上传数据", True):
             st.dataframe(data, height=300, use_container_width=True)
 
         name = st.text_input("样本名称的列名name 👇", "name")
         group = st.text_input("样本分组的前缀legend 👇", "group")
         Title = st.text_input("输出图Title", "LDA")
-        x1 = float(st.slider("x轴右-", 0, 100, 10))
-        x2 = float(st.slider("x轴左+", 0, 100, 10))
-        y1 = float(st.slider("y轴下+", 0, 100, 10))
-        y2 = float(st.slider("y轴上-", 0, 100, 10))
+        Conc = st.text_input("如果需要绘制LDA1与浓度的曲线，填写浓度所在列名", "Concentration")
+
+        x1 = float(st.number_input("x轴下限- [可以填入负数]"))
+        x2 = float(st.number_input("x轴上限+"))
+        y1 = float(st.number_input("y轴下限-"))
+        y2 = float(st.number_input("y轴上限+"))
 
     X = data.drop([name, group], axis=1)
     y = data[group]
 
-    X = data.drop([name, group], axis=1)
-    y = data[group]
-
-    # if st.button('开始计算', type="primary", use_container_width=True):
     with aaa[1]:
-        show_ellipse(X, y, group, x1, x2, y1, y2, Title)
+        LDA1, LDA2 = show_ellipse(X, y, group, x1, x2, y1, y2, Title)
         show_ratio(X, Title)
 
+        if Conc in data.columns:
+            data2 = pd.DataFrame({'LDA1': np.concatenate(LDA1), 'Concentration': data[Conc]})
+            plot_concentration(data2, Title)
+            st.dataframe(data2, use_container_width=True)
