@@ -8,6 +8,7 @@ import os, zipfile, warnings, argparse
 import streamlit as st
 import seaborn as sns
 from scipy import stats
+from sklearn.preprocessing import StandardScaler
 
 warnings.filterwarnings("ignore")
 plt.rcParams['font.family'] = 'serif'
@@ -35,8 +36,12 @@ def plot_cov_ellipse(cov, pos, nstd=3, ax=None, **kwargs):
     return ellip
 
 def show_ellipse(X, y, prefix, x1, x2, y1, y2, output):
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
     model = LinearDiscriminantAnalysis(n_components=2)
-    embedding = model.fit_transform(X, y)
+    embedding = model.fit_transform(X_scaled, y)
+    st.dataframe(embedding, height=300, use_container_width=True)
 
     unique_drugs = set(y)
     regions = sorted(list(unique_drugs))
@@ -105,15 +110,18 @@ def show_ratio(X, output):
 def add_stat_annotation(ax, **kws):
     r2 = kws.pop('r2', None)
     pval = kws.pop('pval', None)
+    slopeval = kws.pop('slopeval', None)
     if r2 is not None:
-        ax.text(0.05, 0.95, f'$R^2$={r2:.2f}', transform=ax.transAxes, fontsize=15, verticalalignment='top')
+        ax.text(0.05, 0.95, f'$R^2$={r2:.4f}', transform=ax.transAxes, fontsize=15, verticalalignment='top')
     if pval is not None:
-        ax.text(0.05, 0.90, f'p-value={pval:.2e}', transform=ax.transAxes, fontsize=15, verticalalignment='top')
-
+        ax.text(0.05, 0.90, f'p-value={pval:.4e}', transform=ax.transAxes, fontsize=15, verticalalignment='top')
+    if slopeval is not None:
+        ax.text(0.05, 0.85, f'slope={slopeval:.4f}', transform=ax.transAxes, fontsize=15, verticalalignment='top')
+        
 def plot_concentration(data, output):
     slope, intercept, r_value, p_value, std_err = stats.linregress(data['LDA1'], data['Concentration'])
     g = sns.lmplot(x='LDA1', y='Concentration', data=data, palette=['#bb2649'])
-    add_stat_annotation(g.ax, r2=r_value**2, pval=p_value)
+    add_stat_annotation(g.ax, r2=r_value**2, pval=p_value, slopeval=slope)
     plt.savefig(f'{output}_plot3.svg', bbox_inches='tight', dpi=300)
     st.image(f'{output}_plot3.svg', use_container_width=True)
 
@@ -138,18 +146,22 @@ if data is not None:
         if st.checkbox("[可选] 显示上传数据", True):
             st.dataframe(data, height=300, use_container_width=True)
 
-        name = st.text_input("样本名称的列名name 👇", "name")
-        group = st.text_input("样本分组的前缀legend 👇", "group")
+        name = st.text_input("***样本名称的列名name 👇", "name")
+        group = st.text_input("***样本分组的列名 👇", "group")
+        Conc = st.text_input("***浓度所在列名 👇", "Concentration")
         Title = st.text_input("输出图Title", "LDA")
-        Conc = st.text_input("如果需要绘制LDA1与浓度的曲线，填写浓度所在列名", "Concentration")
 
         x1 = float(st.number_input("x轴下限- [可以填入负数]"))
         x2 = float(st.number_input("x轴上限+"))
         y1 = float(st.number_input("y轴下限-"))
         y2 = float(st.number_input("y轴上限+"))
 
-    X = data.drop([name, group], axis=1)
-    y = data[group]
+    if Conc in data.columns:
+        X = data.drop([name, group, Conc], axis=1)
+        y = data[group]
+    else:
+        X = data.drop([name, group], axis=1)
+        y = data[group]
 
     with aaa[1]:
         LDA1, LDA2 = show_ellipse(X, y, group, x1, x2, y1, y2, Title)
