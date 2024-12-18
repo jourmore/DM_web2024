@@ -30,7 +30,7 @@
 ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––– */
   /* –– HTML –––––––––––––––––––––––––––––––––––––––––– */
   html {
-    font-size: 100%; /* By default (100%), 1rem is equal to 16px. With font-size at 62.5% (10/16), 1rem is equal to 10px */
+    font-size: 120%; /* By default (100%), 1rem is equal to 16px. With font-size at 62.5% (10/16), 1rem is equal to 10px */
   }
   
   /* –– Body –––––––––––––––––––––––––––––––––––––––––– */
@@ -169,7 +169,7 @@
   }*/
 
 .stApp {
-        background-image: url("https://pic.imgdb.cn/item/66e563b0d9c307b7e9fdeff9.jpg");
+        background-image: url("https://pic.imgdb.cn/item/672b1531d29ded1a8ca86299.jpg");
         background-repeat : no-repeat;
         background-size: cover;
         -webkit-background-size: cover; /* 添加浏览器兼容性前缀 */
@@ -234,7 +234,7 @@ button[type=submit]:hover {
 
 .appview-container .main .block-container
 {
-  max-width: 120%;     
+  max-width: 140%;     
 }
 
 .block-container {
@@ -256,17 +256,4 @@ p {
     line-height: 2.2; /* 可以根据需要调整行距 */
     font-size: 18px;
 }
-
-
-  .footer_center {
-    display: flex;
-  }
-  .box1 {
-    width: 20%;
-    border: 0px solid black;
-  }
-    .box2 {
-    width: 79%;
-    border: 0px solid black;
-  }
 
